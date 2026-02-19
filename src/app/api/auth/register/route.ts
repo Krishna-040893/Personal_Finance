@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { TransactionType } from "@prisma/client";
-
-const registerSchema = z.object({
-  name: z.string().min(1, "Name is required").max(100),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
+import { registerSchema } from "@/lib/schemas";
 
 const DEFAULT_CATEGORIES = [
   { name: "Salary", icon: "Briefcase", color: "#10b981", type: TransactionType.INCOME },
@@ -51,12 +46,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // TODO: Hash password with bcrypt before storing in production
+    const hashedPassword = await bcrypt.hash(password, 12);
+
     const user = await db.user.create({
       data: {
         name,
         email,
-        password,
+        password: hashedPassword,
       },
     });
 

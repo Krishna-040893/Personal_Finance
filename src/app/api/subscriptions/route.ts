@@ -1,26 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { z } from "zod";
-
-const getUserId = async () => {
-  const user = await db.user.findFirst();
-  return user?.id ?? "";
-};
-
-const createSubscriptionSchema = z.object({
-  name: z.string().min(1),
-  amount: z.number().positive(),
-  billingDay: z.number().int().min(1).max(28),
-  category: z.enum(["WORK", "PERSONAL"]),
-  creditCardId: z.string().min(1),
-});
+import { getAuthUserId } from "@/lib/get-user-id";
+import { createSubscriptionSchema } from "@/lib/schemas";
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getAuthUserId();
 
     const body = await req.json();
     const parsed = createSubscriptionSchema.safeParse(body);
@@ -56,6 +41,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(subscription, { status: 201 });
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Failed to create subscription:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -63,10 +51,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getAuthUserId();
 
     const subscriptions = await db.subscription.findMany({
       where: { userId },
@@ -82,6 +67,9 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(subscriptions);
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Failed to fetch subscriptions:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -89,10 +77,7 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getAuthUserId();
 
     const body = await req.json();
     const { id, isActive } = body;
@@ -113,6 +98,9 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json(updated);
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Failed to update subscription:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -120,10 +108,7 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getAuthUserId();
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -139,6 +124,9 @@ export async function DELETE(req: NextRequest) {
     await db.subscription.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Failed to delete subscription:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

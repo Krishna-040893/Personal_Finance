@@ -1,30 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getAuthUserId } from "@/lib/get-user-id";
 import { generateAmortizationSchedule, calculateEMI } from "@/lib/utils";
-import { z } from "zod";
-
-const getUserId = async () => {
-  const user = await db.user.findFirst();
-  return user?.id ?? "";
-};
-
-const createLoanSchema = z.object({
-  name: z.string().min(1),
-  lenderName: z.string().min(1),
-  principalAmount: z.number().positive(),
-  interestRate: z.number().min(0),
-  tenureMonths: z.number().int().positive(),
-  startDate: z.string(),
-  dueDay: z.number().int().min(1).max(28),
-  emiAmount: z.number().positive().optional(),
-});
+import { createLoanSchema } from "@/lib/schemas";
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getAuthUserId();
 
     const body = await req.json();
     const parsed = createLoanSchema.safeParse(body);
@@ -78,6 +60,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(loan, { status: 201 });
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Failed to create loan:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -85,10 +70,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getAuthUserId();
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status") as "ACTIVE" | "CLOSED" | "DEFAULTED" | null;
@@ -108,6 +90,9 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(loans);
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Failed to fetch loans:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -115,10 +100,7 @@ export async function GET(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getAuthUserId();
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -135,6 +117,9 @@ export async function DELETE(req: NextRequest) {
     await db.loan.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Failed to delete loan:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

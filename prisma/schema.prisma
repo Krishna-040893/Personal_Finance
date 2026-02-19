@@ -88,7 +88,7 @@ model Category {
 
 model Transaction {
   id          String          @id @default(cuid())
-  amount      Float
+  amount      Decimal         @db.Decimal(12, 2)
   type        TransactionType
   description String?
   date        DateTime
@@ -97,7 +97,7 @@ model Transaction {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
-  category Category @relation(fields: [categoryId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, date])
@@ -106,7 +106,7 @@ model Transaction {
 
 model Budget {
   id         String   @id @default(cuid())
-  amount     Float
+  amount     Decimal  @db.Decimal(12, 2)
   month      Int
   year       Int
   categoryId String
@@ -114,7 +114,7 @@ model Budget {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  category Category @relation(fields: [categoryId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([categoryId, month, year, userId])
@@ -149,13 +149,13 @@ model Loan {
   id               String     @id @default(cuid())
   name             String
   lenderName       String
-  principalAmount  Float
-  interestRate     Float
+  principalAmount  Decimal    @db.Decimal(12, 2)
+  interestRate     Decimal    @db.Decimal(5, 2)
   tenureMonths     Int
-  emiAmount        Float
+  emiAmount        Decimal    @db.Decimal(12, 2)
   startDate        DateTime
   dueDay           Int
-  remainingBalance Float
+  remainingBalance Decimal    @db.Decimal(12, 2)
   status           LoanStatus @default(ACTIVE)
   userId           String
   createdAt        DateTime   @default(now())
@@ -174,9 +174,9 @@ model EmiPayment {
   month         Int
   year          Int
   dueDate       DateTime
-  amount        Float
-  principalPart Float
-  interestPart  Float
+  amount        Decimal       @db.Decimal(12, 2)
+  principalPart Decimal       @db.Decimal(12, 2)
+  interestPart  Decimal       @db.Decimal(12, 2)
   status        PaymentStatus @default(UPCOMING)
   paidDate      DateTime?
   userId        String
@@ -196,7 +196,7 @@ model CreditCard {
   id              String   @id @default(cuid())
   name            String
   issuer          String
-  cardLimit       Float
+  cardLimit       Decimal  @db.Decimal(12, 2)
   billingCycleDay Int
   paymentDueDay   Int
   userId          String
@@ -213,7 +213,7 @@ model CreditCard {
 model Subscription {
   id           String               @id @default(cuid())
   name         String
-  amount       Float
+  amount       Decimal              @db.Decimal(12, 2)
   billingDay   Int
   category     SubscriptionCategory @default(PERSONAL)
   isActive     Boolean              @default(true)
@@ -236,7 +236,7 @@ model SubscriptionPayment {
   month          Int
   year           Int
   dueDate        DateTime
-  amount         Float
+  amount         Decimal       @db.Decimal(12, 2)
   status         PaymentStatus @default(UPCOMING)
   paidDate       DateTime?
   userId         String

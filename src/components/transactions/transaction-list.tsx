@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Trash2 } from "lucide-react";
+import { Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface Transaction {
   id: string;
@@ -21,24 +24,59 @@ interface Transaction {
 
 interface TransactionListProps {
   transactions: Transaction[];
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
 }
 
-export function TransactionList({ transactions }: TransactionListProps) {
+export function TransactionList({
+  transactions,
+  currentPage,
+  totalPages,
+  totalCount,
+}: TransactionListProps) {
   const router = useRouter();
+  const { toast } = useToast();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  async function handleDelete(id: string) {
-    const res = await fetch(`/api/transactions?id=${id}`, {
-      method: "DELETE",
-    });
-    if (res.ok) {
-      router.refresh();
+  async function handleDelete() {
+    if (!deleteId) return;
+    setDeleting(true);
+
+    try {
+      const res = await fetch(`/api/transactions?id=${deleteId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        toast({ title: "Transaction deleted", variant: "success" });
+        router.refresh();
+      } else {
+        toast({ title: "Failed to delete transaction", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Failed to delete transaction", variant: "destructive" });
+    } finally {
+      setDeleting(false);
+      setDeleteId(null);
     }
+  }
+
+  function goToPage(page: number) {
+    router.push(`/transactions?page=${page}`);
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>All Transactions</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>All Transactions</CardTitle>
+          {totalCount > 0 && (
+            <span className="text-sm text-muted-foreground">
+              {totalCount} total
+            </span>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {transactions.length === 0 ? (
@@ -84,7 +122,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => handleDelete(tx.id)}
+                    onClick={() => setDeleteId(tx.id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -93,7 +131,42 @@ export function TransactionList({ transactions }: TransactionListProps) {
             ))}
           </div>
         )}
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-border pt-4 mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage <= 1}
+              onClick={() => goToPage(currentPage - 1)}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage >= totalPages}
+              onClick={() => goToPage(currentPage + 1)}
+            >
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        )}
       </CardContent>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Delete transaction"
+        description="This action cannot be undone. The transaction will be permanently removed."
+        onConfirm={handleDelete}
+        loading={deleting}
+      />
     </Card>
   );
 }

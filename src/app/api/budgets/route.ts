@@ -1,26 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { z } from "zod";
-
-// TODO: Replace with actual auth user ID
-const getUserId = async () => {
-  const user = await db.user.findFirst();
-  return user?.id ?? "";
-};
-
-const createBudgetSchema = z.object({
-  amount: z.number().positive(),
-  categoryId: z.string().min(1),
-  month: z.number().int().min(1).max(12),
-  year: z.number().int().min(2020).max(2100),
-});
+import { getAuthUserId } from "@/lib/get-user-id";
+import { createBudgetSchema } from "@/lib/schemas";
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getAuthUserId();
 
     const body = await req.json();
     const parsed = createBudgetSchema.safeParse(body);
@@ -54,6 +39,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(budget, { status: 201 });
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Failed to create budget:", error);
     return NextResponse.json(
       { error: "Internal server error" },
@@ -64,10 +52,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getAuthUserId();
 
     const { searchParams } = new URL(req.url);
     const month = parseInt(searchParams.get("month") ?? "");
@@ -84,6 +69,9 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(budgets);
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Failed to fetch budgets:", error);
     return NextResponse.json(
       { error: "Internal server error" },
@@ -94,10 +82,7 @@ export async function GET(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getAuthUserId();
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -118,6 +103,9 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Failed to delete budget:", error);
     return NextResponse.json(
       { error: "Internal server error" },

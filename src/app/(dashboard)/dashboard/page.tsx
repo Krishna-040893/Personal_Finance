@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { db } from "@/lib/db";
+import { getAuthUserId } from "@/lib/get-user-id";
 import { getCurrentMonth, getCurrentYear } from "@/lib/utils";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { SpendingChart } from "@/components/dashboard/spending-chart";
@@ -9,14 +10,8 @@ import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { UpcomingPayments } from "@/components/dashboard/upcoming-payments";
 import { ensureMonthlyPayments } from "@/lib/payment-sync";
 
-// TODO: Replace with actual auth user ID
-const DEV_USER_ID = async () => {
-  const user = await db.user.findFirst();
-  return user?.id ?? "";
-};
-
 export default async function DashboardPage() {
-  const userId = await DEV_USER_ID();
+  const userId = await getAuthUserId();
   const now = new Date();
   const currentMonth = getCurrentMonth();
   const currentYear = getCurrentYear();
@@ -25,59 +20,68 @@ export default async function DashboardPage() {
   const endOfMonth = new Date(currentYear, currentMonth, 0, 23, 59, 59);
 
   // Fetch current month transactions
-  const transactions = userId
-    ? await db.transaction.findMany({
-        where: {
-          userId,
-          date: { gte: startOfMonth, lte: endOfMonth },
-        },
-        include: { category: true },
-        orderBy: { date: "desc" },
-      })
-    : [];
+  const transactions = await db.transaction.findMany({
+    where: {
+      userId,
+      date: { gte: startOfMonth, lte: endOfMonth },
+    },
+    include: { category: true },
+    orderBy: { date: "desc" },
+  });
 
   // Calculate totals
   const totalIncome = transactions
     .filter((t) => t.type === "INCOME")
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + Number(t.amount), 0);
 
   const totalExpenses = transactions
     .filter((t) => t.type === "EXPENSE")
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + Number(t.amount), 0);
 
   const balance = totalIncome - totalExpenses;
 
   // Fetch budgets for current month
-  const budgets = userId
-    ? await db.budget.findMany({
-        where: { userId, month: currentMonth, year: currentYear },
-      })
-    : [];
+  const budgets = await db.budget.findMany({
+    where: { userId, month: currentMonth, year: currentYear },
+  });
 
-  const totalBudget = budgets.reduce((sum, b) => sum + b.amount, 0);
+  const totalBudget = budgets.reduce((sum, b) => sum + Number(b.amount), 0);
   const budgetRemaining = totalBudget - totalExpenses;
 
-  // Build monthly chart data (last 6 months)
-  const monthlyData = [];
+  // Build monthly chart data (last 6 months) — single query
+  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  const endOfCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+  const allChartTxs = await db.transaction.findMany({
+    where: { userId, date: { gte: sixMonthsAgo, lte: endOfCurrentMonth } },
+    select: { amount: true, type: true, date: true },
+  });
+
+  const monthlyMap = new Map<string, { income: number; expenses: number }>();
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const monthStart = new Date(d.getFullYear(), d.getMonth(), 1);
-    const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    monthlyMap.set(key, { income: 0, expenses: 0 });
+  }
 
-    const monthTxs = userId
-      ? await db.transaction.findMany({
-          where: { userId, date: { gte: monthStart, lte: monthEnd } },
-        })
-      : [];
+  for (const t of allChartTxs) {
+    const key = `${t.date.getFullYear()}-${t.date.getMonth()}`;
+    const bucket = monthlyMap.get(key);
+    if (bucket) {
+      if (t.type === "INCOME") bucket.income += Number(t.amount);
+      else bucket.expenses += Number(t.amount);
+    }
+  }
 
+  const monthlyData: { month: string; income: number; expenses: number }[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    const bucket = monthlyMap.get(key)!;
     monthlyData.push({
       month: d.toLocaleString("en-IN", { month: "short" }),
-      income: monthTxs
-        .filter((t) => t.type === "INCOME")
-        .reduce((s, t) => s + t.amount, 0),
-      expenses: monthTxs
-        .filter((t) => t.type === "EXPENSE")
-        .reduce((s, t) => s + t.amount, 0),
+      income: bucket.income,
+      expenses: bucket.expenses,
     });
   }
 
@@ -94,7 +98,7 @@ export default async function DashboardPage() {
             color: t.category.color ?? "#64748b",
           };
         }
-        acc[key].value += t.amount;
+        acc[key].value += Number(t.amount);
         return acc;
       },
       {}
@@ -105,30 +109,26 @@ export default async function DashboardPage() {
   // Upcoming payments (next 5 EMI + subscription payments)
   await ensureMonthlyPayments(userId, currentMonth, currentYear);
 
-  const upcomingEMIs = userId
-    ? await db.emiPayment.findMany({
-        where: { userId, status: "UPCOMING" },
-        include: { loan: { select: { name: true } } },
-        orderBy: { dueDate: "asc" },
-        take: 5,
-      })
-    : [];
+  const upcomingEMIs = await db.emiPayment.findMany({
+    where: { userId, status: "UPCOMING" },
+    include: { loan: { select: { name: true } } },
+    orderBy: { dueDate: "asc" },
+    take: 5,
+  });
 
-  const upcomingSubs = userId
-    ? await db.subscriptionPayment.findMany({
-        where: { userId, status: "UPCOMING" },
-        include: { subscription: { select: { name: true } } },
-        orderBy: { dueDate: "asc" },
-        take: 5,
-      })
-    : [];
+  const upcomingSubs = await db.subscriptionPayment.findMany({
+    where: { userId, status: "UPCOMING" },
+    include: { subscription: { select: { name: true } } },
+    orderBy: { dueDate: "asc" },
+    take: 5,
+  });
 
   const upcomingPayments = [
     ...upcomingEMIs.map((p) => ({
       id: p.id,
       type: "emi" as const,
       name: p.loan.name,
-      amount: p.amount,
+      amount: Number(p.amount),
       dueDate: p.dueDate.toISOString(),
       status: p.status,
     })),
@@ -136,7 +136,7 @@ export default async function DashboardPage() {
       id: p.id,
       type: "subscription" as const,
       name: p.subscription.name,
-      amount: p.amount,
+      amount: Number(p.amount),
       dueDate: p.dueDate.toISOString(),
       status: p.status,
     })),
@@ -147,7 +147,7 @@ export default async function DashboardPage() {
   // Recent transactions (last 5)
   const recentTransactions = transactions.slice(0, 5).map((t) => ({
     id: t.id,
-    amount: t.amount,
+    amount: Number(t.amount),
     type: t.type,
     description: t.description,
     date: t.date.toISOString(),

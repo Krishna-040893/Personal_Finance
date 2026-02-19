@@ -1,4 +1,5 @@
 import { PrismaClient, TransactionType } from "@prisma/client";
+import bcrypt from "bcryptjs";
 import { calculateEMI, generateAmortizationSchedule } from "../src/lib/utils";
 
 const prisma = new PrismaClient();
@@ -26,13 +27,15 @@ const DEFAULT_CATEGORIES = [
 async function main() {
   console.log("Seeding database...");
 
-  // Create a default user for development
+  // Create a default user for development (password: "password123")
+  const hashedPassword = await bcrypt.hash("password123", 12);
   const user = await prisma.user.upsert({
     where: { email: "dev@example.com" },
     update: {},
     create: {
       email: "dev@example.com",
       name: "Dev User",
+      password: hashedPassword,
     },
   });
 

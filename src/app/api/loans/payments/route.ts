@@ -1,26 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { z } from "zod";
-
-const getUserId = async () => {
-  const user = await db.user.findFirst();
-  return user?.id ?? "";
-};
-
-const updatePaymentSchema = z.object({
-  paymentId: z.string().min(1),
-  status: z.enum(["PAID", "MISSED", "UPCOMING"]),
-});
+import { getAuthUserId } from "@/lib/get-user-id";
+import { updateEmiPaymentSchema } from "@/lib/schemas";
 
 export async function PATCH(req: NextRequest) {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getAuthUserId();
 
     const body = await req.json();
-    const parsed = updatePaymentSchema.safeParse(body);
+    const parsed = updateEmiPaymentSchema.safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -98,6 +86,9 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json(updatedPayment);
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Failed to update EMI payment:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

@@ -1,18 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getAuthUserId } from "@/lib/get-user-id";
 import { ensureMonthlyPayments } from "@/lib/payment-sync";
-
-const getUserId = async () => {
-  const user = await db.user.findFirst();
-  return user?.id ?? "";
-};
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getAuthUserId();
 
     const { searchParams } = new URL(req.url);
     const month = parseInt(searchParams.get("month") ?? String(new Date().getMonth() + 1));
@@ -48,9 +41,9 @@ export async function GET(req: NextRequest) {
       _sum: { amount: true },
     });
 
-    const totalIncome = incomeAgg._sum.amount ?? 0;
-    const totalEMIs = emiPayments.reduce((sum, p) => sum + p.amount, 0);
-    const totalSubscriptions = subscriptionPayments.reduce((sum, p) => sum + p.amount, 0);
+    const totalIncome = Number(incomeAgg._sum.amount ?? 0);
+    const totalEMIs = emiPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+    const totalSubscriptions = subscriptionPayments.reduce((sum, p) => sum + Number(p.amount), 0);
     const discretionaryRemaining = totalIncome - totalEMIs - totalSubscriptions;
 
     // Build calendar items
@@ -60,7 +53,7 @@ export async function GET(req: NextRequest) {
         type: "emi" as const,
         name: p.loan.name,
         subtitle: p.loan.lenderName,
-        amount: p.amount,
+        amount: Number(p.amount),
         dueDate: p.dueDate.toISOString(),
         day: p.dueDate.getDate(),
         status: p.status,
@@ -70,7 +63,7 @@ export async function GET(req: NextRequest) {
         type: "subscription" as const,
         name: p.subscription.name,
         subtitle: `${p.subscription.creditCard.name} (${p.subscription.category})`,
-        amount: p.amount,
+        amount: Number(p.amount),
         dueDate: p.dueDate.toISOString(),
         day: p.dueDate.getDate(),
         status: p.status,
@@ -89,6 +82,9 @@ export async function GET(req: NextRequest) {
       calendarItems,
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Failed to fetch planner data:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

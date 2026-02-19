@@ -9,6 +9,7 @@ import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useRouter } from "next/navigation";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface EmiPayment {
   id: string;
@@ -39,20 +40,25 @@ interface Loan {
 
 export function LoanList({ loans }: { loans: Loan[] }) {
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!confirm("Delete this loan and all its EMI records?")) return;
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
 
     try {
-      const res = await fetch(`/api/loans?id=${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/loans?id=${deleteId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       toast({ title: "Loan deleted", variant: "success" });
       router.refresh();
     } catch {
       toast({ title: "Failed to delete", variant: "destructive" });
+    } finally {
+      setDeleting(false);
+      setDeleteId(null);
     }
   };
 
@@ -98,7 +104,10 @@ export function LoanList({ loans }: { loans: Loan[] }) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={(e) => handleDelete(loan.id, e)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteId(loan.id);
+                    }}
                     className="h-8 w-8 text-muted-foreground hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -143,6 +152,15 @@ export function LoanList({ loans }: { loans: Loan[] }) {
           onOpenChange={(open) => !open && setSelectedLoan(null)}
         />
       )}
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Delete loan"
+        description="This will permanently delete the loan and all its EMI records. This action cannot be undone."
+        onConfirm={handleDelete}
+        loading={deleting}
+      />
     </>
   );
 }

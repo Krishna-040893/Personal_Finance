@@ -1,52 +1,47 @@
 export const dynamic = "force-dynamic";
 
 import { db } from "@/lib/db";
+import { getAuthUserId } from "@/lib/get-user-id";
 import { CreditCardForm } from "@/components/credit-cards/credit-card-form";
 import { CreditCardList } from "@/components/credit-cards/credit-card-list";
 
-const DEV_USER_ID = async () => {
-  const user = await db.user.findFirst();
-  return user?.id ?? "";
-};
-
 export default async function CreditCardsPage() {
-  const userId = await DEV_USER_ID();
+  const userId = await getAuthUserId();
 
-  const cards = userId
-    ? await db.creditCard.findMany({
-        where: { userId },
+  const cards = await db.creditCard.findMany({
+    where: { userId },
+    include: {
+      subscriptions: {
         include: {
-          subscriptions: {
-            include: {
-              payments: {
-                orderBy: [{ year: "desc" }, { month: "desc" }],
-                take: 1,
-              },
-            },
+          payments: {
+            orderBy: [{ year: "desc" }, { month: "desc" }],
+            take: 1,
           },
         },
-        orderBy: { createdAt: "desc" },
-      })
-    : [];
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
 
   const serializedCards = cards.map((card) => {
+    const cardLimit = Number(card.cardLimit);
     const activeSubscriptionTotal = card.subscriptions
       .filter((s) => s.isActive)
-      .reduce((sum, s) => sum + s.amount, 0);
+      .reduce((sum, s) => sum + Number(s.amount), 0);
 
     return {
       id: card.id,
       name: card.name,
       issuer: card.issuer,
-      cardLimit: card.cardLimit,
+      cardLimit,
       billingCycleDay: card.billingCycleDay,
       paymentDueDay: card.paymentDueDay,
       activeSubscriptionTotal,
-      utilization: card.cardLimit > 0 ? (activeSubscriptionTotal / card.cardLimit) * 100 : 0,
+      utilization: cardLimit > 0 ? (activeSubscriptionTotal / cardLimit) * 100 : 0,
       subscriptions: card.subscriptions.map((sub) => ({
         id: sub.id,
         name: sub.name,
-        amount: sub.amount,
+        amount: Number(sub.amount),
         billingDay: sub.billingDay,
         category: sub.category,
         isActive: sub.isActive,

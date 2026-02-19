@@ -1,63 +1,59 @@
 export const dynamic = "force-dynamic";
 
 import { db } from "@/lib/db";
+import { getAuthUserId } from "@/lib/get-user-id";
 import { getCurrentMonth, getCurrentYear, getMonthName } from "@/lib/utils";
 import { BudgetForm } from "@/components/budgets/budget-form";
 import { BudgetList } from "@/components/budgets/budget-list";
 
-// TODO: Replace with actual auth user ID
-const DEV_USER_ID = async () => {
-  const user = await db.user.findFirst();
-  return user?.id ?? "";
-};
-
 export default async function BudgetsPage() {
-  const userId = await DEV_USER_ID();
+  const userId = await getAuthUserId();
   const currentMonth = getCurrentMonth();
   const currentYear = getCurrentYear();
 
   const [budgets, expenseCategories] = await Promise.all([
-    userId
-      ? db.budget.findMany({
-          where: { userId, month: currentMonth, year: currentYear },
-          include: { category: true },
-        })
-      : [],
-    userId
-      ? db.category.findMany({
-          where: { userId, type: "EXPENSE" },
-          orderBy: { name: "asc" },
-        })
-      : [],
+    db.budget.findMany({
+      where: { userId, month: currentMonth, year: currentYear },
+      include: { category: true },
+    }),
+    db.category.findMany({
+      where: { userId, type: "EXPENSE" },
+      orderBy: { name: "asc" },
+    }),
   ]);
 
-  // Calculate spent per budget category
+  // Calculate spent per budget category — single groupBy query
   const startOfMonth = new Date(currentYear, currentMonth - 1, 1);
   const endOfMonth = new Date(currentYear, currentMonth, 0, 23, 59, 59);
 
-  const budgetItems = await Promise.all(
-    budgets.map(async (b) => {
-      const spent = await db.transaction.aggregate({
+  const categoryIds = budgets.map((b) => b.categoryId);
+
+  const spentByCategory = categoryIds.length > 0
+    ? await db.transaction.groupBy({
+        by: ["categoryId"],
         where: {
           userId,
-          categoryId: b.categoryId,
+          categoryId: { in: categoryIds },
           type: "EXPENSE",
           date: { gte: startOfMonth, lte: endOfMonth },
         },
         _sum: { amount: true },
-      });
+      })
+    : [];
 
-      return {
-        id: b.id,
-        amount: b.amount,
-        spent: spent._sum.amount ?? 0,
-        category: {
-          name: b.category.name,
-          color: b.category.color,
-        },
-      };
-    })
+  const spentMap = new Map(
+    spentByCategory.map((row) => [row.categoryId, Number(row._sum.amount ?? 0)])
   );
+
+  const budgetItems = budgets.map((b) => ({
+    id: b.id,
+    amount: Number(b.amount),
+    spent: spentMap.get(b.categoryId) ?? 0,
+    category: {
+      name: b.category.name,
+      color: b.category.color,
+    },
+  }));
 
   const serializedCategories = expenseCategories.map((c) => ({
     id: c.id,

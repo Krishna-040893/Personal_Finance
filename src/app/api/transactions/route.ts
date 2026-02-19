@@ -1,27 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { z } from "zod";
-
-// TODO: Replace with actual auth user ID
-const getUserId = async () => {
-  const user = await db.user.findFirst();
-  return user?.id ?? "";
-};
-
-const createTransactionSchema = z.object({
-  amount: z.number().positive(),
-  type: z.enum(["INCOME", "EXPENSE"]),
-  description: z.string().optional(),
-  date: z.string(),
-  categoryId: z.string().min(1),
-});
+import { getAuthUserId } from "@/lib/get-user-id";
+import { createTransactionSchema } from "@/lib/schemas";
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getAuthUserId();
 
     const body = await req.json();
     const parsed = createTransactionSchema.safeParse(body);
@@ -46,6 +30,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(transaction, { status: 201 });
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Failed to create transaction:", error);
     return NextResponse.json(
       { error: "Internal server error" },
@@ -56,14 +43,11 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getAuthUserId();
 
     const { searchParams } = new URL(req.url);
     const type = searchParams.get("type") as "INCOME" | "EXPENSE" | null;
-    const limit = parseInt(searchParams.get("limit") ?? "50");
+    const limit = Math.min(Math.max(parseInt(searchParams.get("limit") ?? "50") || 50, 1), 200);
 
     const transactions = await db.transaction.findMany({
       where: {
@@ -77,6 +61,9 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(transactions);
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Failed to fetch transactions:", error);
     return NextResponse.json(
       { error: "Internal server error" },
@@ -87,10 +74,7 @@ export async function GET(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getAuthUserId();
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -112,6 +96,9 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Failed to delete transaction:", error);
     return NextResponse.json(
       { error: "Internal server error" },

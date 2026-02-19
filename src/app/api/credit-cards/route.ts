@@ -1,26 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { z } from "zod";
-
-const getUserId = async () => {
-  const user = await db.user.findFirst();
-  return user?.id ?? "";
-};
-
-const createCardSchema = z.object({
-  name: z.string().min(1),
-  issuer: z.string().min(1),
-  cardLimit: z.number().positive(),
-  billingCycleDay: z.number().int().min(1).max(28),
-  paymentDueDay: z.number().int().min(1).max(28),
-});
+import { getAuthUserId } from "@/lib/get-user-id";
+import { createCardSchema } from "@/lib/schemas";
 
 export async function POST(req: NextRequest) {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getAuthUserId();
 
     const body = await req.json();
     const parsed = createCardSchema.safeParse(body);
@@ -38,6 +23,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(card, { status: 201 });
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Failed to create credit card:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -45,10 +33,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getAuthUserId();
 
     const cards = await db.creditCard.findMany({
       where: { userId },
@@ -67,19 +52,24 @@ export async function GET(req: NextRequest) {
 
     // Calculate utilization per card
     const result = cards.map((card) => {
+      const cardLimit = Number(card.cardLimit);
       const activeSubscriptionTotal = card.subscriptions
         .filter((s) => s.isActive)
-        .reduce((sum, s) => sum + s.amount, 0);
+        .reduce((sum, s) => sum + Number(s.amount), 0);
 
       return {
         ...card,
+        cardLimit,
         activeSubscriptionTotal,
-        utilization: card.cardLimit > 0 ? (activeSubscriptionTotal / card.cardLimit) * 100 : 0,
+        utilization: cardLimit > 0 ? (activeSubscriptionTotal / cardLimit) * 100 : 0,
       };
     });
 
     return NextResponse.json(result);
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Failed to fetch credit cards:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -87,10 +77,7 @@ export async function GET(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const userId = await getAuthUserId();
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
@@ -106,6 +93,9 @@ export async function DELETE(req: NextRequest) {
     await db.creditCard.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Failed to delete credit card:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

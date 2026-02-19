@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface BudgetItem {
   id: string;
@@ -23,10 +26,30 @@ interface BudgetListProps {
 
 export function BudgetList({ budgets, monthLabel }: BudgetListProps) {
   const router = useRouter();
+  const { toast } = useToast();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  async function handleDelete(id: string) {
-    const res = await fetch(`/api/budgets?id=${id}`, { method: "DELETE" });
-    if (res.ok) router.refresh();
+  async function handleDelete() {
+    if (!deleteId) return;
+    setDeleting(true);
+
+    try {
+      const res = await fetch(`/api/budgets?id=${deleteId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        toast({ title: "Budget deleted", variant: "success" });
+        router.refresh();
+      } else {
+        toast({ title: "Failed to delete budget", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Failed to delete budget", variant: "destructive" });
+    } finally {
+      setDeleting(false);
+      setDeleteId(null);
+    }
   }
 
   return (
@@ -70,7 +93,7 @@ export function BudgetList({ budgets, monthLabel }: BudgetListProps) {
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                        onClick={() => handleDelete(b.id)}
+                        onClick={() => setDeleteId(b.id)}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
@@ -96,6 +119,15 @@ export function BudgetList({ budgets, monthLabel }: BudgetListProps) {
           </div>
         )}
       </CardContent>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Delete budget"
+        description="This action cannot be undone. The budget will be permanently removed."
+        onConfirm={handleDelete}
+        loading={deleting}
+      />
     </Card>
   );
 }

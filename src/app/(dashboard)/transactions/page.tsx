@@ -1,38 +1,47 @@
 export const dynamic = "force-dynamic";
 
 import { db } from "@/lib/db";
+import { getAuthUserId } from "@/lib/get-user-id";
 import { TransactionForm } from "@/components/transactions/transaction-form";
 import { TransactionList } from "@/components/transactions/transaction-list";
+import { redirect } from "next/navigation";
 
-// TODO: Replace with actual auth user ID
-const DEV_USER_ID = async () => {
-  const user = await db.user.findFirst();
-  return user?.id ?? "";
-};
+const PAGE_SIZE = 20;
 
-export default async function TransactionsPage() {
-  const userId = await DEV_USER_ID();
+export default async function TransactionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const userId = await getAuthUserId();
+  const params = await searchParams;
+  const page = Math.max(1, parseInt(params.page ?? "1") || 1);
 
-  const [transactions, categories] = await Promise.all([
-    userId
-      ? db.transaction.findMany({
-          where: { userId },
-          include: { category: true },
-          orderBy: { date: "desc" },
-          take: 50,
-        })
-      : [],
-    userId
-      ? db.category.findMany({
-          where: { userId },
-          orderBy: { name: "asc" },
-        })
-      : [],
+  const [transactions, totalCount, categories] = await Promise.all([
+    db.transaction.findMany({
+      where: { userId },
+      include: { category: true },
+      orderBy: { date: "desc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    db.transaction.count({ where: { userId } }),
+    db.category.findMany({
+      where: { userId },
+      orderBy: { name: "asc" },
+    }),
   ]);
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  // Guard against empty last page
+  if (page > totalPages && totalPages > 0) {
+    redirect(`/transactions?page=${totalPages}`);
+  }
 
   const serializedTransactions = transactions.map((t) => ({
     id: t.id,
-    amount: t.amount,
+    amount: Number(t.amount),
     type: t.type,
     description: t.description,
     date: t.date.toISOString(),
@@ -59,7 +68,12 @@ export default async function TransactionsPage() {
 
       <div className="grid gap-8 lg:grid-cols-[350px_1fr]">
         <TransactionForm categories={serializedCategories} />
-        <TransactionList transactions={serializedTransactions} />
+        <TransactionList
+          transactions={serializedTransactions}
+          currentPage={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
+        />
       </div>
     </div>
   );

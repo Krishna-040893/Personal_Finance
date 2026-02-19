@@ -1,23 +1,15 @@
 export const dynamic = "force-dynamic";
 
 import { db } from "@/lib/db";
+import { getAuthUserId } from "@/lib/get-user-id";
 import { getCurrentMonth, getCurrentYear, getMonthName } from "@/lib/utils";
 import { ensureMonthlyPayments } from "@/lib/payment-sync";
 import { PlannerClient } from "@/components/planner/planner-client";
 
-const DEV_USER_ID = async () => {
-  const user = await db.user.findFirst();
-  return user?.id ?? "";
-};
-
 export default async function PlannerPage() {
-  const userId = await DEV_USER_ID();
+  const userId = await getAuthUserId();
   const month = getCurrentMonth();
   const year = getCurrentYear();
-
-  if (!userId) {
-    return <p className="text-muted-foreground">No user found.</p>;
-  }
 
   // Ensure subscription payments exist
   await ensureMonthlyPayments(userId, month, year);
@@ -49,9 +41,9 @@ export default async function PlannerPage() {
     _sum: { amount: true },
   });
 
-  const totalIncome = incomeAgg._sum.amount ?? 0;
-  const totalEMIs = emiPayments.reduce((sum, p) => sum + p.amount, 0);
-  const totalSubscriptions = subscriptionPayments.reduce((sum, p) => sum + p.amount, 0);
+  const totalIncome = Number(incomeAgg._sum.amount ?? 0);
+  const totalEMIs = emiPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+  const totalSubscriptions = subscriptionPayments.reduce((sum, p) => sum + Number(p.amount), 0);
 
   const calendarItems = [
     ...emiPayments.map((p) => ({
@@ -59,7 +51,7 @@ export default async function PlannerPage() {
       type: "emi" as const,
       name: p.loan.name,
       subtitle: p.loan.lenderName,
-      amount: p.amount,
+      amount: Number(p.amount),
       dueDate: p.dueDate.toISOString(),
       day: p.dueDate.getDate(),
       status: p.status,
@@ -69,7 +61,7 @@ export default async function PlannerPage() {
       type: "subscription" as const,
       name: p.subscription.name,
       subtitle: `${p.subscription.creditCard.name} (${p.subscription.category})`,
-      amount: p.amount,
+      amount: Number(p.amount),
       dueDate: p.dueDate.toISOString(),
       day: p.dueDate.getDate(),
       status: p.status,

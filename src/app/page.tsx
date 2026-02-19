@@ -76,7 +76,7 @@ const features = [
 
 const stats = [
   { value: "100%", label: "Free & Open Source" },
-  { value: "256-bit", label: "Encrypted Data" },
+  { value: "100%", label: "Private & Secure" },
   { value: "0", label: "Ads or Tracking" },
   { value: "∞", label: "Transactions" },
 ];

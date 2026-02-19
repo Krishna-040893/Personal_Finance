@@ -22,9 +22,9 @@ Next.js 16 App Router with PostgreSQL/Prisma. Two route groups under `src/app/`:
 - `(auth)/` — login page (credential-based auth via NextAuth.js v5 beta)
 - `(dashboard)/` — main app behind sidebar layout: dashboard, transactions, budgets, settings
 
-**API routes** at `src/app/api/` handle CRUD (transactions, budgets, categories). API routes currently use a `getUserId()` placeholder that grabs the first user from DB instead of reading from the session — this is a known TODO.
+**API routes** at `src/app/api/` handle CRUD (transactions, budgets, categories). All API routes use `getAuthUserId()` from `src/lib/get-user-id.ts` to read the authenticated user from the NextAuth session. Unauthenticated requests throw "Unauthorized" and return 401.
 
-**Auth** is configured in `src/lib/auth.ts` using `@auth/prisma-adapter` with JWT strategy. Dev seed user (`dev@example.com`) has no password. Passwords are stored in plain text — bcrypt comparison is a TODO.
+**Auth** is configured in `src/lib/auth.ts` using `@auth/prisma-adapter` with JWT strategy. Passwords are hashed with bcrypt (via `bcryptjs`). Auth middleware at `src/middleware.ts` protects all dashboard and API routes, redirecting unauthenticated users to `/login`.
 
 **Database** — Prisma client singleton in `src/lib/db.ts` (exported as `db`). Schema in `prisma/schema.prisma` defines: User, Account, Session, VerificationToken (NextAuth models) + Category, Transaction, Budget (finance models). `TransactionType` enum: `INCOME | EXPENSE`.
 

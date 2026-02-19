@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/components/ui/toast";
 
 interface Category {
   id: string;
@@ -19,6 +20,7 @@ interface TransactionFormProps {
 
 export function TransactionForm({ categories }: TransactionFormProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [type, setType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
 
@@ -28,27 +30,43 @@ export function TransactionForm({ categories }: TransactionFormProps) {
     e.preventDefault();
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const data = {
-      amount: parseFloat(formData.get("amount") as string),
-      type,
-      description: formData.get("description") as string,
-      date: formData.get("date") as string,
-      categoryId: formData.get("categoryId") as string,
-    };
+    try {
+      const formData = new FormData(e.currentTarget);
+      const data = {
+        amount: parseFloat(formData.get("amount") as string),
+        type,
+        description: formData.get("description") as string,
+        date: formData.get("date") as string,
+        categoryId: formData.get("categoryId") as string,
+      };
 
-    const res = await fetch("/api/transactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+      const res = await fetch("/api/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-    if (res.ok) {
-      (e.target as HTMLFormElement).reset();
-      router.refresh();
+      if (res.ok) {
+        (e.target as HTMLFormElement).reset();
+        toast({ title: "Transaction added", variant: "success" });
+        router.refresh();
+      } else {
+        const body = await res.json().catch(() => null);
+        toast({
+          title: "Failed to add transaction",
+          description: body?.error ?? "Please try again",
+          variant: "destructive",
+        });
+      }
+    } catch {
+      toast({
+        title: "Failed to add transaction",
+        description: "A network error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
   return (

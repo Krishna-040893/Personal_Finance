@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentMonth, getCurrentYear } from "@/lib/utils";
+import { useToast } from "@/components/ui/toast";
 
 interface Category {
   id: string;
@@ -19,32 +20,49 @@ interface BudgetFormProps {
 
 export function BudgetForm({ categories }: BudgetFormProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const data = {
-      amount: parseFloat(formData.get("amount") as string),
-      categoryId: formData.get("categoryId") as string,
-      month: parseInt(formData.get("month") as string),
-      year: parseInt(formData.get("year") as string),
-    };
+    try {
+      const formData = new FormData(e.currentTarget);
+      const data = {
+        amount: parseFloat(formData.get("amount") as string),
+        categoryId: formData.get("categoryId") as string,
+        month: parseInt(formData.get("month") as string),
+        year: parseInt(formData.get("year") as string),
+      };
 
-    const res = await fetch("/api/budgets", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+      const res = await fetch("/api/budgets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-    if (res.ok) {
-      (e.target as HTMLFormElement).reset();
-      router.refresh();
+      if (res.ok) {
+        (e.target as HTMLFormElement).reset();
+        toast({ title: "Budget saved", variant: "success" });
+        router.refresh();
+      } else {
+        const body = await res.json().catch(() => null);
+        toast({
+          title: "Failed to save budget",
+          description: body?.error ?? "Please try again",
+          variant: "destructive",
+        });
+      }
+    } catch {
+      toast({
+        title: "Failed to save budget",
+        description: "A network error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
   return (
