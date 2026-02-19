@@ -50,9 +50,9 @@ export function CategoryChart({ data, title }: CategoryChartProps) {
               </Pie>
               <Tooltip
                 formatter={(value) =>
-                  new Intl.NumberFormat("en-US", {
+                  new Intl.NumberFormat("en-IN", {
                     style: "currency",
-                    currency: "USD",
+                    currency: "INR",
                   }).format(value as number)
                 }
                 contentStyle={{

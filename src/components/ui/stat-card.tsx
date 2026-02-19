@@ -44,7 +44,7 @@ export function StatCard({
       case "percentage":
         return `${v.toFixed(1)}%`;
       case "number":
-        return new Intl.NumberFormat("en-US").format(v);
+        return new Intl.NumberFormat("en-IN").format(v);
     }
   };
 

@@ -6,14 +6,14 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("en-IN", {
     style: "currency",
-    currency: "USD",
+    currency: "INR",
   }).format(amount);
 }
 
 export function formatDate(date: Date | string): string {
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat("en-IN", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -21,7 +21,7 @@ export function formatDate(date: Date | string): string {
 }
 
 export function getMonthName(month: number): string {
-  return new Date(2024, month - 1).toLocaleString("en-US", { month: "long" });
+  return new Date(2024, month - 1).toLocaleString("en-IN", { month: "long" });
 }
 
 export function getCurrentMonth(): number {

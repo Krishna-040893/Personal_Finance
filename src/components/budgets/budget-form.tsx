@@ -86,7 +86,7 @@ export function BudgetForm({ categories }: BudgetFormProps) {
               <Select name="month" defaultValue={getCurrentMonth()}>
                 {Array.from({ length: 12 }, (_, i) => (
                   <option key={i + 1} value={i + 1}>
-                    {new Date(2024, i).toLocaleString("en-US", {
+                    {new Date(2024, i).toLocaleString("en-IN", {
                       month: "long",
                     })}
                   </option>

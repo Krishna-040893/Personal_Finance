@@ -106,7 +106,7 @@ export function LoanDetailDialog({ loan, open, onOpenChange }: Props) {
                 <div className="flex items-center gap-3">
                   <div className="text-body-sm">
                     <p className="font-medium">
-                      {new Date(0, payment.month - 1).toLocaleString("en-US", { month: "short" })}{" "}
+                      {new Date(0, payment.month - 1).toLocaleString("en-IN", { month: "short" })}{" "}
                       {payment.year}
                     </p>
                     <p className="text-caption text-muted-foreground">

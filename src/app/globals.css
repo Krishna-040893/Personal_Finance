@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 /* ============================================================
-   PERSONAL FINANCE TRACKER — DESIGN SYSTEM
-   Aesthetic: Refined Fintech — clean, trustworthy, premium
+   BLUEPRINT BOOKS — DESIGN SYSTEM
+   Aesthetic: Blueprint Precision — structured, trustworthy, authoritative
    Fonts: Outfit (display) + DM Sans (body) + JetBrains Mono (mono)
    ============================================================ */
 
@@ -26,11 +26,11 @@
   --color-card: #ffffff;
   --color-card-foreground: #0c0e16;
 
-  /* Primary */
-  --color-primary: #2563eb;
+  /* Primary — deep blueprint navy */
+  --color-primary: #1e3f6f;
   --color-primary-foreground: #ffffff;
-  --color-primary-hover: #1d4ed8;
-  --color-primary-muted: #dbeafe;
+  --color-primary-hover: #17305a;
+  --color-primary-muted: #dce6f2;
 
   /* Secondary */
   --color-secondary: #f0f2f5;
@@ -72,13 +72,13 @@
   --color-border: #e2e5ea;
   --color-border-subtle: #f0f2f5;
   --color-border-strong: #c8cdd5;
-  --color-ring: #2563eb;
+  --color-ring: #1e3f6f;
 
   /* Overlay */
   --color-overlay: rgba(0, 0, 0, 0.5);
 
   /* Chart palette — 6 visually distinct colors */
-  --color-chart-1: #2563eb;
+  --color-chart-1: #1e3f6f;
   --color-chart-2: #10b981;
   --color-chart-3: #f59e0b;
   --color-chart-4: #8b5cf6;
@@ -163,7 +163,7 @@
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(0, 0, 0, 0.02);
   --shadow-elevated: 0 12px 40px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.02);
-  --shadow-glow-primary: 0 0 24px rgba(37, 99, 235, 0.15);
+  --shadow-glow-primary: 0 0 24px rgba(30, 63, 111, 0.2);
   --shadow-glow-success: 0 0 24px rgba(16, 185, 129, 0.15);
   --shadow-glow-destructive: 0 0 24px rgba(239, 68, 68, 0.15);
 
@@ -281,10 +281,10 @@
   --color-card: #131316;
   --color-card-foreground: #fafafa;
 
-  --color-primary: #3b82f6;
+  --color-primary: #5a9bd6;
   --color-primary-foreground: #ffffff;
-  --color-primary-hover: #60a5fa;
-  --color-primary-muted: #172554;
+  --color-primary-hover: #7cb3e4;
+  --color-primary-muted: #152a45;
 
   --color-secondary: #1c1c22;
   --color-secondary-foreground: #fafafa;
@@ -320,10 +320,10 @@
   --color-border: #27272a;
   --color-border-subtle: #1c1c22;
   --color-border-strong: #3f3f46;
-  --color-ring: #3b82f6;
+  --color-ring: #5a9bd6;
   --color-overlay: rgba(0, 0, 0, 0.75);
 
-  --color-chart-1: #60a5fa;
+  --color-chart-1: #5a9bd6;
   --color-chart-2: #34d399;
   --color-chart-3: #fbbf24;
   --color-chart-4: #a78bfa;
@@ -337,7 +337,7 @@
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.03);
   --shadow-elevated: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.03);
-  --shadow-glow-primary: 0 0 24px rgba(59, 130, 246, 0.2);
+  --shadow-glow-primary: 0 0 24px rgba(90, 155, 214, 0.25);
   --shadow-glow-success: 0 0 24px rgba(52, 211, 153, 0.2);
   --shadow-glow-destructive: 0 0 24px rgba(248, 113, 113, 0.2);
 }
@@ -393,7 +393,7 @@ body {
 
 /* Gradient backgrounds */
 .gradient-primary {
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  background: linear-gradient(135deg, #1e3f6f, #2d5fa0);
 }
 
 .gradient-success {

@@ -5,7 +5,6 @@ import {
   ArrowRight,
   BarChart3,
   CreditCard,
-  DollarSign,
   Landmark,
   PiggyBank,
   CalendarDays,
@@ -15,6 +14,7 @@ import {
   ChevronRight,
   ArrowLeftRight,
 } from "lucide-react";
+import { BlueprintBookIcon } from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
 
 const features = [
@@ -95,11 +95,11 @@ export default function LandingPage() {
       <header className="landing-stagger-1 relative z-50">
         <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-8">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-glow-primary transition-shadow group-hover:shadow-[0_0_32px_rgba(37,99,235,0.3)]">
-              <DollarSign className="h-5 w-5" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-glow-primary transition-shadow group-hover:shadow-[0_0_32px_rgba(30,63,111,0.35)]">
+              <BlueprintBookIcon size={20} />
             </div>
             <span className="font-display text-xl font-bold tracking-tight">
-              FinanceTracker
+              Blueprint Books
             </span>
           </Link>
           <div className="hidden items-center gap-8 md:flex">
@@ -139,7 +139,7 @@ export default function LandingPage() {
           <div className="max-w-2xl">
             <div className="landing-stagger-2 mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary">
               <Zap className="h-3.5 w-3.5" />
-              Open source personal finance
+              Your financial blueprint, open source
             </div>
             <h1 className="landing-stagger-3 font-display text-display leading-[1.1] tracking-tight">
               Your money,
@@ -157,7 +157,7 @@ export default function LandingPage() {
               <Link href="/login">
                 <Button
                   size="lg"
-                  className="gap-2 rounded-xl px-8 text-base shadow-glow-primary transition-all hover:shadow-[0_0_32px_rgba(37,99,235,0.3)]"
+                  className="gap-2 rounded-xl px-8 text-base shadow-glow-primary transition-all hover:shadow-[0_0_32px_rgba(30,63,111,0.35)]"
                 >
                   Start Tracking Free
                   <ArrowRight className="h-4 w-4" />
@@ -217,7 +217,7 @@ export default function LandingPage() {
                 </div>
                 <div className="mt-4 flex items-baseline gap-1.5">
                   <span className="font-display text-2xl font-bold">
-                    $4,280
+                    ₹4,280
                   </span>
                   <span className="text-xs text-muted-foreground">
                     saved this month
@@ -234,7 +234,7 @@ export default function LandingPage() {
                   <div>
                     <p className="text-xs font-medium">Salary Deposited</p>
                     <p className="font-mono text-sm font-bold text-success">
-                      +$5,400.00
+                      +₹5,400.00
                     </p>
                   </div>
                 </div>
@@ -344,7 +344,7 @@ export default function LandingPage() {
             <Link href="/login">
               <Button
                 size="lg"
-                className="gap-2 rounded-xl px-10 text-base shadow-glow-primary transition-all hover:shadow-[0_0_32px_rgba(37,99,235,0.3)]"
+                className="gap-2 rounded-xl px-10 text-base shadow-glow-primary transition-all hover:shadow-[0_0_32px_rgba(30,63,111,0.35)]"
               >
                 Get Started — It&apos;s Free
                 <ArrowRight className="h-4 w-4" />
@@ -358,9 +358,9 @@ export default function LandingPage() {
       <footer className="relative z-10 border-t border-border/40 py-10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 sm:flex-row lg:px-8">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <DollarSign className="h-4 w-4 text-primary" />
+            <BlueprintBookIcon size={16} className="text-primary" />
             <span className="font-display font-semibold text-foreground">
-              FinanceTracker
+              Blueprint Books
             </span>
             <span className="ml-1">&copy; {new Date().getFullYear()}</span>
           </div>

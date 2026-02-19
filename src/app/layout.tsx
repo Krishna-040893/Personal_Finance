@@ -21,8 +21,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Personal Finance Tracker",
-  description: "Track your income, expenses, and budgets",
+  title: "Blueprint Books — Personal Finance Tracker",
+  description: "Your financial blueprint. Track income, expenses, budgets, loans, and subscriptions in one place.",
 };
 
 export default function RootLayout({

@@ -32,7 +32,7 @@ export function PlannerCalendar({ month, year, items }: Props) {
   const isCurrentMonth = today.getMonth() + 1 === month && today.getFullYear() === year;
   const todayDate = today.getDate();
 
-  const monthLabel = new Date(year, month - 1).toLocaleString("en-US", { month: "long" });
+  const monthLabel = new Date(year, month - 1).toLocaleString("en-IN", { month: "long" });
 
   // Group items by day
   const itemsByDay: Record<number, CalendarItem[]> = {};

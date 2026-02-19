@@ -99,7 +99,7 @@ export function LoanForm() {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-body-sm font-medium text-muted-foreground">Principal ($)</label>
+            <label className="text-body-sm font-medium text-muted-foreground">Principal (₹)</label>
             <input
               type="number"
               required

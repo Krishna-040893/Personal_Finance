@@ -28,6 +28,13 @@ Next.js 16 App Router with PostgreSQL/Prisma. Two route groups under `src/app/`:
 
 **Database** — Prisma client singleton in `src/lib/db.ts` (exported as `db`). Schema in `prisma/schema.prisma` defines: User, Account, Session, VerificationToken (NextAuth models) + Category, Transaction, Budget (finance models). `TransactionType` enum: `INCOME | EXPENSE`.
 
+## Branding & Currency
+
+- **Brand name**: Blueprint Books — Personal Finance Tracker
+- **Logo**: Custom SVG component at `src/components/ui/logo.tsx` (`BlueprintBookIcon`). Use this instead of any Lucide icon for branding.
+- **Currency**: Indian Rupee (INR / ₹). All monetary formatting uses `en-IN` locale and `INR` currency via `formatCurrency()` in `src/lib/utils.ts`. Use `₹` in labels (e.g., "Amount (₹)"). Use the `IndianRupee` icon from Lucide where a currency icon is needed — never `DollarSign`.
+- **Locale**: All `toLocaleString` / `Intl.NumberFormat` / `Intl.DateTimeFormat` calls use `en-IN`. Numbers follow Indian grouping (lakhs/crores).
+
 ## Key Conventions
 
 - **Path alias**: `@/*` maps to `./src/*`

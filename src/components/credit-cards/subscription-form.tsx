@@ -82,7 +82,7 @@ export function SubscriptionForm({ creditCardId, creditCardName, open, onOpenCha
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-body-sm font-medium text-muted-foreground">Amount ($)</label>
+              <label className="text-body-sm font-medium text-muted-foreground">Amount (₹)</label>
               <input
                 type="number"
                 required

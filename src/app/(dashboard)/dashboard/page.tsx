@@ -71,7 +71,7 @@ export default async function DashboardPage() {
       : [];
 
     monthlyData.push({
-      month: d.toLocaleString("en-US", { month: "short" }),
+      month: d.toLocaleString("en-IN", { month: "short" }),
       income: monthTxs
         .filter((t) => t.type === "INCOME")
         .reduce((s, t) => s + t.amount, 0),
@@ -163,7 +163,7 @@ export default async function DashboardPage() {
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <p className="text-muted-foreground">
           Your financial overview for{" "}
-          {now.toLocaleString("en-US", { month: "long", year: "numeric" })}
+          {now.toLocaleString("en-IN", { month: "long", year: "numeric" })}
         </p>
       </div>
 

@@ -8,11 +8,11 @@ import {
   ArrowLeftRight,
   PiggyBank,
   Settings,
-  DollarSign,
   Landmark,
   CreditCard,
   CalendarDays,
 } from "lucide-react";
+import { BlueprintBookIcon } from "@/components/ui/logo";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -29,9 +29,9 @@ export function Sidebar() {
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-card">
-      <div className="flex h-16 items-center gap-2 border-b border-border px-6">
-        <DollarSign className="h-6 w-6 text-primary" />
-        <span className="text-lg font-bold">FinanceTracker</span>
+      <div className="flex h-16 items-center gap-2.5 border-b border-border px-6">
+        <BlueprintBookIcon size={22} className="text-primary" />
+        <span className="font-display text-lg font-bold tracking-tight">Blueprint Books</span>
       </div>
       <nav className="flex flex-col gap-1 p-4">
         {navItems.map((item) => {

@@ -7,7 +7,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  DollarSign,
   ArrowRight,
   Eye,
   EyeOff,
@@ -15,6 +14,7 @@ import {
   PiggyBank,
   Shield,
 } from "lucide-react";
+import { BlueprintBookIcon } from "@/components/ui/logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -69,10 +69,10 @@ export default function LoginPage() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm transition-colors group-hover:bg-white/30">
-              <DollarSign className="h-5 w-5" />
+              <BlueprintBookIcon size={20} />
             </div>
             <span className="font-display text-xl font-bold tracking-tight">
-              FinanceTracker
+              Blueprint Books
             </span>
           </Link>
 
@@ -123,7 +123,7 @@ export default function LoginPage() {
 
           {/* Bottom */}
           <p className="text-xs text-white/40">
-            &copy; {new Date().getFullYear()} FinanceTracker. Open Source.
+            &copy; {new Date().getFullYear()} Blueprint Books. Open Source.
           </p>
         </div>
       </div>
@@ -140,10 +140,10 @@ export default function LoginPage() {
           <div className="mb-10 lg:hidden">
             <Link href="/" className="flex items-center gap-2.5">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <DollarSign className="h-5 w-5" />
+                <BlueprintBookIcon size={20} />
               </div>
               <span className="font-display text-xl font-bold tracking-tight">
-                FinanceTracker
+                Blueprint Books
               </span>
             </Link>
           </div>
@@ -209,7 +209,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="h-11 w-full gap-2 rounded-xl text-sm font-semibold shadow-glow-primary transition-all hover:shadow-[0_0_32px_rgba(37,99,235,0.3)]"
+              className="h-11 w-full gap-2 rounded-xl text-sm font-semibold shadow-glow-primary transition-all hover:shadow-[0_0_32px_rgba(30,63,111,0.35)]"
               disabled={loading}
             >
               {loading ? (

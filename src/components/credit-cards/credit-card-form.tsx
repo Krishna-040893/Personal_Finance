@@ -80,7 +80,7 @@ export function CreditCardForm() {
         </div>
 
         <div>
-          <label className="text-body-sm font-medium text-muted-foreground">Card Limit ($)</label>
+          <label className="text-body-sm font-medium text-muted-foreground">Card Limit (₹)</label>
           <input
             type="number"
             required

@@ -1,7 +1,7 @@
 "use client";
 
 import { StatCard } from "@/components/ui/stat-card";
-import { DollarSign, Landmark, Repeat, Wallet } from "lucide-react";
+import { IndianRupee, Landmark, Repeat, Wallet } from "lucide-react";
 
 interface Summary {
   totalIncome: number;
@@ -16,7 +16,7 @@ export function PlannerSummary({ summary }: { summary: Summary }) {
       <StatCard
         title="Monthly Income"
         value={summary.totalIncome}
-        icon={DollarSign}
+        icon={IndianRupee}
         trend="neutral"
       />
       <StatCard
