@@ -20,11 +20,16 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts     Account[]
-  sessions     Session[]
-  categories   Category[]
-  transactions Transaction[]
-  budgets      Budget[]
+  accounts             Account[]
+  sessions             Session[]
+  categories           Category[]
+  transactions         Transaction[]
+  budgets              Budget[]
+  loans                Loan[]
+  emiPayments          EmiPayment[]
+  creditCards          CreditCard[]
+  subscriptions        Subscription[]
+  subscriptionPayments SubscriptionPayment[]
 }
 
 model Account {
@@ -119,4 +124,128 @@ model Budget {
 enum TransactionType {
   INCOME
   EXPENSE
+}
+
+// ─── Loan & EMI Models ─────────────────────────────────
+
+enum LoanStatus {
+  ACTIVE
+  CLOSED
+  DEFAULTED
+}
+
+enum PaymentStatus {
+  UPCOMING
+  PAID
+  MISSED
+}
+
+enum SubscriptionCategory {
+  WORK
+  PERSONAL
+}
+
+model Loan {
+  id               String     @id @default(cuid())
+  name             String
+  lenderName       String
+  principalAmount  Float
+  interestRate     Float
+  tenureMonths     Int
+  emiAmount        Float
+  startDate        DateTime
+  dueDay           Int
+  remainingBalance Float
+  status           LoanStatus @default(ACTIVE)
+  userId           String
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emiPayments EmiPayment[]
+
+  @@index([userId])
+  @@index([userId, status])
+}
+
+model EmiPayment {
+  id            String        @id @default(cuid())
+  loanId        String
+  month         Int
+  year          Int
+  dueDate       DateTime
+  amount        Float
+  principalPart Float
+  interestPart  Float
+  status        PaymentStatus @default(UPCOMING)
+  paidDate      DateTime?
+  userId        String
+  createdAt     DateTime      @default(now())
+
+  loan Loan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([loanId, month, year])
+  @@index([userId, month, year])
+  @@index([userId, status])
+}
+
+// ─── Credit Card & Subscription Models ──────────────────
+
+model CreditCard {
+  id              String   @id @default(cuid())
+  name            String
+  issuer          String
+  cardLimit       Float
+  billingCycleDay Int
+  paymentDueDay   Int
+  userId          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptions Subscription[]
+
+  @@unique([name, userId])
+  @@index([userId])
+}
+
+model Subscription {
+  id           String               @id @default(cuid())
+  name         String
+  amount       Float
+  billingDay   Int
+  category     SubscriptionCategory @default(PERSONAL)
+  isActive     Boolean              @default(true)
+  creditCardId String
+  userId       String
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  creditCard CreditCard          @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments   SubscriptionPayment[]
+
+  @@unique([name, creditCardId, userId])
+  @@index([userId])
+}
+
+model SubscriptionPayment {
+  id             String        @id @default(cuid())
+  subscriptionId String
+  month          Int
+  year           Int
+  dueDate        DateTime
+  amount         Float
+  status         PaymentStatus @default(UPCOMING)
+  paidDate       DateTime?
+  userId         String
+  createdAt      DateTime      @default(now())
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, month, year])
+  @@index([userId, month, year])
+  @@index([userId, status])
 }

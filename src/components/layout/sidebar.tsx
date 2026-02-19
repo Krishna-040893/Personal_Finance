@@ -9,12 +9,18 @@ import {
   PiggyBank,
   Settings,
   DollarSign,
+  Landmark,
+  CreditCard,
+  CalendarDays,
 } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/budgets", label: "Budgets", icon: PiggyBank },
+  { href: "/loans", label: "Loans & EMIs", icon: Landmark },
+  { href: "/credit-cards", label: "Credit Cards", icon: CreditCard },
+  { href: "/planner", label: "Monthly Planner", icon: CalendarDays },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

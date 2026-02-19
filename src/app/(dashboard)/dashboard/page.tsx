@@ -6,6 +6,8 @@ import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { SpendingChart } from "@/components/dashboard/spending-chart";
 import { CategoryChart } from "@/components/dashboard/category-chart";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
+import { UpcomingPayments } from "@/components/dashboard/upcoming-payments";
+import { ensureMonthlyPayments } from "@/lib/payment-sync";
 
 // TODO: Replace with actual auth user ID
 const DEV_USER_ID = async () => {
@@ -100,6 +102,48 @@ export default async function DashboardPage() {
 
   const categoryData = Object.values(expensesByCategory);
 
+  // Upcoming payments (next 5 EMI + subscription payments)
+  await ensureMonthlyPayments(userId, currentMonth, currentYear);
+
+  const upcomingEMIs = userId
+    ? await db.emiPayment.findMany({
+        where: { userId, status: "UPCOMING" },
+        include: { loan: { select: { name: true } } },
+        orderBy: { dueDate: "asc" },
+        take: 5,
+      })
+    : [];
+
+  const upcomingSubs = userId
+    ? await db.subscriptionPayment.findMany({
+        where: { userId, status: "UPCOMING" },
+        include: { subscription: { select: { name: true } } },
+        orderBy: { dueDate: "asc" },
+        take: 5,
+      })
+    : [];
+
+  const upcomingPayments = [
+    ...upcomingEMIs.map((p) => ({
+      id: p.id,
+      type: "emi" as const,
+      name: p.loan.name,
+      amount: p.amount,
+      dueDate: p.dueDate.toISOString(),
+      status: p.status,
+    })),
+    ...upcomingSubs.map((p) => ({
+      id: p.id,
+      type: "subscription" as const,
+      name: p.subscription.name,
+      amount: p.amount,
+      dueDate: p.dueDate.toISOString(),
+      status: p.status,
+    })),
+  ]
+    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+    .slice(0, 5);
+
   // Recent transactions (last 5)
   const recentTransactions = transactions.slice(0, 5).map((t) => ({
     id: t.id,
@@ -134,6 +178,8 @@ export default async function DashboardPage() {
         <SpendingChart data={monthlyData} />
         <CategoryChart data={categoryData} title="Expenses by Category" />
       </div>
+
+      <UpcomingPayments payments={upcomingPayments} />
 
       <RecentTransactions transactions={recentTransactions} />
     </div>
